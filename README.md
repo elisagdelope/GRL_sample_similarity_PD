@@ -5,15 +5,16 @@ Scripts to perform graph representation learning modelling on sample-similarity 
 #### ppmi_analyses 
 
 ##### ppmi_data4ML_class.R
-This script performs unsupervised filters to generate data for ML modelling of snapshot data (T0) from RNAseq data.
+Performs unsupervised filters to generate data for ML modelling of snapshot data (T0) from RNAseq data.
 
 * ppmi_data4ML_class.R employs as input transcriptomics and phenotypical data resulting from previous pre-processing scripts described in repository *statistical_analyses_cross_long_PD* for **parsing data** and **Baseline (T0) PD/HC** (ppmi_filter_gene_expression.R, ppmi_norm_gene_expression.R, ppmi_generate_pathway_level.R). 
 
 #### luxpark_analyses 
 
-lx_data4ML_class.R, lx_data4ML_class_denovo.R
-This script performs unsupervised filters to generate data for ML modelling of snapshot data (T0) from metabolomics data (all PD/HC and *de novo* PD/HC).
+##### lx_data4ML_class.R, lx_data4ML_class_denovo.R
+Performs unsupervised filters to generate data for ML modelling of snapshot data (T0) from metabolomics data (all PD/HC and *de novo* PD/HC).
 
+* lx_data4ML_class.R and lx_data4ML_class_denovo.R use as input metabolomics and phenotypical data resulting from previous pre-processing scripts described in repository *statistical_analyses_cross_long_PD* for **parsing data** and **Baseline (T0) PD/HC** (lx_extract_visit.R, lx_denovo_filter.R). 
 
 ### Modelling
 
