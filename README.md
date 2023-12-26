@@ -20,7 +20,7 @@ The main script to run the modelling pipeline, including network construction, m
 
 <!--![SSN GNN schema](meta_data/schema_nn_ssn.png) -->
 <div align="center"><tr><td align="center" width="9999">
-<img src="meta_data/schema_nn_ssn.png" alt="Architecture of the GNN models using sample-sample similarity networks" width="80%" align="center">
+<img src="meta_data/schema_nn_ssn.png" alt="Architecture of the GNN models using sample-sample similarity networks" width="70%" align="center">
 </td></tr></div>
 Other scripts used for the modelling pipeline:
 * `cv_results.py`: Extracts the cross-validated results by looking at the minimum validation loss and generates figures and results tables based on node and edge importance.
