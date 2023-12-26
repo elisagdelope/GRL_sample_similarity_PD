@@ -1,10 +1,9 @@
 # Graph representation learning using sample-similarity networks for modelling omics data in Parkinson's disease 
 
 <div align="center"><tr><td align="center" width="9999">
-
 <img src="meta_data/Sample-sample_schema.png" alt="Schema of sample-similarity network modelling pipeline" width="80%" align="center">
-
 </td></tr></div>
+<!--![SSN GNN schema](meta_data/Sample-sample_schema.png) -->
 
 This repository contains an implementation to perform graph representation learning modelling using sample-similarity networks derived from high-throughput omics profiles, which is able to learn PD-specific fingerprints from the spatial distribution of molecular abundance similarities in an end-to-end fashion. The scripts apply the graph representation learning modelling pipeline on sample-similarity networks of transcriptomics and metabolomics data from the PPMI and the LuxPARK cohort, respectively. 
 
@@ -19,8 +18,10 @@ The main script to run the modelling pipeline, including network construction, m
 * `plot_utils.py`: Functions to create plots about the training and validation, as well as to project the node (sample) embeddings in 2D and 3D. They were used for debugging and experimentation.
 * `wandb_config_*.yaml`: Config file for the hyperparameter search of each model.
 
-![SSN GNN schema](meta_data/schema_nn_ssn.png)
-
+<!--![SSN GNN schema](meta_data/schema_nn_ssn.png) -->
+<div align="center"><tr><td align="center" width="9999">
+<img src="meta_data/schema_nn_ssn.png" alt="Architecture of the GNN models using sample-sample similarity networks" width="80%" align="center">
+</td></tr></div>
 Other scripts used for the modelling pipeline:
 * `cv_results.py`: Extracts the cross-validated results by looking at the minimum validation loss and generates figures and results tables based on node and edge importance.
 * `features_plot.py`: Generates a barplot with most relevant nodes and their functional annotation.
