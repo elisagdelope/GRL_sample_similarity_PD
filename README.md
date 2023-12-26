@@ -1,8 +1,10 @@
 # Graph representation learning using sample-similarity networks for modelling omics data in Parkinson's disease 
 
-<div style="text-align: center;">
-  <img src="meta_data/Sample-sample_schema.png" alt="Schema of sample-similarity network modelling pipeline" width="50%">
-</div>
+<div align="center"><tr><td align="center" width="9999">
+
+<img src="meta_data/Sample-sample_schema.png" alt="Schema of sample-similarity network modelling pipeline" width="80%" align="center">
+
+</td></tr></div>
 
 This repository contains an implementation to perform graph representation learning modelling using sample-similarity networks derived from high-throughput omics profiles, which is able to learn PD-specific fingerprints from the spatial distribution of molecular abundance similarities in an end-to-end fashion. The scripts apply the graph representation learning modelling pipeline on sample-similarity networks of transcriptomics and metabolomics data from the PPMI and the LuxPARK cohort, respectively. 
 
