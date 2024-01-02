@@ -57,3 +57,13 @@ $ wandb agent psn-metabolomics/psn-LUXPARK-gcn_uw/qnpbufbx --count=130
 ```
 
 The wandb agent will execute `cv_wandb.py` with its set of hyperparameters (as defined in `wandb_config_gcn.yaml` or corresponding `yaml` file, depending on the experiment). Note that for a given experiment, the same sweep file with random hyperparameter search is utilized.
+
+
+## Data
+
+The public transcriptomics data used in this project was derived from the Parkinson’s Progression Markers Initiative (https://www.ppmi-info.org/, RNAseq - IR3).
+The metabolomics data from LuxPARK is not publicly available as it is linked to the Luxembourg Parkinson’s Study and its internal regulations. Any requests for accessing the dataset can be directed to request.ncer-pd@uni.lu.
+
+
+## License
+The code is available under the MIT License (see `LICENSE`).
