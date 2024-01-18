@@ -18,30 +18,8 @@ import shap
 from datetime import date
 from imblearn.under_sampling import RandomUnderSampler
 
-#---
-#sweep_config = {'project': 'my-cv-test5',
-#                'method': 'grid',
-#                'program': 'cv_test.py',
-#                'metric': {'name': 'val_loss', 'goal': 'minimize'},
-#                'parameters': {'C_lasso': {'values': [0.1, 0.05]},
-#                               'n_folds': {'value': 5},
-#                               'S_threshold': {'values': [0.6]},
-#                               'model_name': {'value': "Cheb_GCNN_uw"},
-#                               'n_epochs': {'value': 50},
-#                               'lr': {'value': 0.03},
-#                               'lrscheduler_factor': {'value': 0.9},
-#                               'dropout': {'value': 0.5},
-#                               'weight_decay': {'value': 0.01},
-#                               'cl1_hidden_units': {'value': 8},
-#                               'cl2_hidden_units': {'value': 8},
-#                               'll_out_units': {'value': 2},
-#                               'K_cheby': {'value':2},
-#                               'heads': {'value':3}}}
-#wandb.login()
-#sweep_id = wandb.sweep(sweep=sweep_config, project='my-cv-test5') # set up environment variable??
 
 if __name__ == '__main__':
-    #os.environ["WANDB_API_KEY"] = "834f701bb72a96a9988d59e3d9d710f5f9a4b9ef"
     # set seeds
     random.seed(42)
     np.random.seed(42)
@@ -196,4 +174,3 @@ if __name__ == '__main__':
     pd.DataFrame.from_dict(features_track).to_csv(OUT_DIR + sweep_run.name + "_features_track.csv", index=False)
     pd.DataFrame.from_dict(fold_test_performance).to_csv(OUT_DIR + sweep_run.name + "_test_performance.csv", index=False)
     pd.DataFrame.from_dict(fold_v_performance).to_csv(OUT_DIR + sweep_run.name + "_val_performance.csv", index=False)
-#wandb.agent(sweep_id, main)
