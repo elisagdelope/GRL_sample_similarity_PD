@@ -93,7 +93,6 @@ if __name__ == '__main__':
                                       max_iter=10_000,
                                       solver='liblinear',
                                       random_state=42))
-        # for each epoch:
         # fit scaler
         X_train = scaler.fit_transform(X_train)
         # fit feature selection
