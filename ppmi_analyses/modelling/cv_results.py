@@ -5,6 +5,7 @@ from collections import Counter
 import argparse
 import ast
 import re
+from utils import compress_dir, rm_files
 
 # I/O
 parser = argparse.ArgumentParser()
@@ -20,7 +21,7 @@ val_files = [f for f in os.listdir(DIR) if f.endswith(val_pattern)]
 lowest_losses = {}
 
 # select first 130 sweeps
-val_files = [file_name for file_name in val_files if int(re.search(r'\d+', file_name).group()) <= 130]
+val_files = sorted(val_files, key=lambda x: int(re.search(r'\d+', x).group() if re.search(r'\d+', x) else float('inf')))[:130]
 
 # Iterate over the files
 for file in val_files:
@@ -85,10 +86,7 @@ ft_df = pd.DataFrame(ft_dict)
 ft_df.sort_values(by='Count', ascending=False, inplace=True)
 
 # annotate
-annotation_file = "../data/annot_ids2ensembldb_2023-09-05.tsv"
-gene_annotation = pd.read_csv(annotation_file, sep='\t')
-
-annotation_file = "../../../references/ensembldb_2021-05-18.tsv"
+annotation_file = "../data/ensembldb_2024-03-27.tsv"
 annotation = pd.read_csv(annotation_file, sep='\t', low_memory=False)
 annotation = annotation[["ensembl_gene_id", "wikigene_name", "wikigene_description"]]
 annotation.drop_duplicates(inplace=True)
@@ -100,3 +98,7 @@ ft_df.rename(columns={'wikigene_name': 'Gene_symbol', 'wikigene_description': 'A
 cvperformance_df.to_csv(DIR_RESULTS + "/cv_test_results.csv", index=False)
 features_df.to_csv(DIR_RESULTS + "/cv_relevantfeatures.csv", index=False)
 ft_df.to_csv(DIR_RESULTS + "/cv_overlappingfeatures_annotated.csv", index=False)
+
+# compress DIR files
+compress_dir(DIR)
+rm_files(DIR)
