@@ -5,7 +5,7 @@ from collections import Counter
 import argparse
 import ast
 import re
-
+from utils import compress_dir, rm_files
 # I/O
 parser = argparse.ArgumentParser()
 parser.add_argument('dir_path', help='Directory with wandb sweeps results')
@@ -20,7 +20,7 @@ val_files = [f for f in os.listdir(DIR) if f.endswith(val_pattern)]
 lowest_losses = {}
 
 # select first 130 sweeps
-val_files = [file_name for file_name in val_files if int(re.search(r'\d+', file_name).group()) <= 130]
+val_files = sorted(val_files, key=lambda x: int(re.search(r'\d+', x).group() if re.search(r'\d+', x) else float('inf')))[:130]
 
 # Iterate over the files
 for file in val_files:
@@ -84,7 +84,7 @@ ft_dict = {'Feature': list(ft_counts.keys()), 'Count': list(ft_counts.values())}
 ft_df = pd.DataFrame(ft_dict)
 ft_df.sort_values(by='Count', ascending=False, inplace=True)
 
-# annotate
+# annotatec
 annotation_file = "../data/chemical_annotation.tsv"
 chem_annotation = pd.read_csv(annotation_file, sep='\t')
 ft_df = pd.merge(ft_df, chem_annotation[['SUPER_PATHWAY','SUB_PATHWAY', "CHEMICAL_NAME"]], left_on='Feature', right_on="CHEMICAL_NAME")
@@ -95,15 +95,10 @@ cvperformance_df.to_csv(DIR_RESULTS + "/cv_test_results.csv", index=False)
 features_df.to_csv(DIR_RESULTS + "/cv_relevantfeatures.csv", index=False)
 ft_df.to_csv(DIR_RESULTS + "/cv_overlappingfeatures.csv", index=False)
 
-for file in *_features_track.csv; do
-  newname=$(echo "$file" | sed 's/-9//')
-  mv "$file" "$newname"
-done
-for file in *_val_performance.csv; do
-  newname=$(echo "$file" | sed 's/-9//')
-  mv "$file" "$newname"
-done
-for file in *_test_performance.csv; do
-  newname=$(echo "$file" | sed 's/-9//')
-  mv "$file" "$newname"
-done
+# compress DIR files
+compress_dir(DIR)
+rm_files(DIR)
+
+
+
+
