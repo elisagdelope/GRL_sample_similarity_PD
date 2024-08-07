@@ -1,0 +1,68 @@
+project: gpst_lin
+method: random
+program: cv_wandb.py
+metric:
+  name: val_loss
+  goal: minimize
+parameters:
+  C_lasso:
+    distribution: log_uniform_values
+    max:  1.2 # 0.1823215567939546
+    min:  0.02 # -3.912023005428146
+  n_folds:
+    value: 10
+  S_threshold:
+    distribution: uniform
+    max: 0.5
+    min: 0.3
+  n_epochs:
+    value: 450
+  lr:
+    distribution: log_uniform_values
+    max: 0.1 # -2.3025850929940455
+    min: 0.0005 # -9.210340371976182
+  weight_decay:
+    distribution: log_uniform_values
+    max: 0.2 # -0.6931471805599453
+    min: 0.0002 # -9.210340371976182
+  h1_hidden_units:
+    distribution: categorical
+    values:
+      - 8
+  cl1_hidden_units:
+    distribution: categorical
+    values:
+      - 8
+      - 16
+      - 32
+      - 64
+  h2_hidden_units:
+    distribution: categorical
+    values:
+      - 8
+  cl2_hidden_units:
+    distribution: categorical
+    values:
+      - 8
+  ll_out_units:
+    value: 2
+  dropout:
+    distribution: uniform
+    max: 0.7
+    min: 0
+  lrscheduler_factor:
+    value: 0.5
+  model_name:
+    value: "GPST_lin"
+  K_cheby:
+    distribution: categorical
+    values:
+      - 2
+      - 3
+  heads:
+    values:
+      - 2
+      - 3
+      - 5
+  depth:
+    value: 2
