@@ -1,13 +1,14 @@
 import numpy as np
 import pandas as pd
 import random
-from sklearn.preprocessing import StandardScaler
 import os
 from matplotlib import pyplot as plt
 from utils import *
 from models import *
+from sklearn.preprocessing import StandardScaler
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils import class_weight
 import networkx as nx
 import wandb
 import yaml
@@ -17,32 +18,36 @@ import argparse
 import shap
 from datetime import date
 from imblearn.under_sampling import RandomUnderSampler
+import matplotlib 
 
+#wandb.login()
+#sweep_id = wandb.sweep(sweep=sweep_config, project='my-cv-test5') 
+# os.environ["WANDB_API_KEY"] = "" set up environment variable?? 
 
+# Set matplotlib to 'agg' 
+if matplotlib.get_backend() != 'agg':
+    print(f"Switching Matplotlib backend from '{matplotlib.get_backend()}' to 'agg'")
+    matplotlib.use('agg')
+
+#----------------  Main function -----------------#
 if __name__ == '__main__':
     # set seeds
     random.seed(42)
     np.random.seed(42)
     torch.manual_seed(42)
+    torch.cuda.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
     # parse args
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', dest='sweep_config', type=str)  # , default='configs/default.yaml'
     args, unknown = parser.parse_known_args()
     # set up wandb
-    sweep_run = wandb.init(config=args.sweep_config, entity="psn-transcriptomics")
+    sweep_run = wandb.init(config=args.sweep_config)
     myconfig = wandb.config
     print('Config file from wandb:', myconfig)
-    if torch.cuda.is_available():
-        print('cuda available')
-        dtypeFloat = torch.cuda.FloatTensor
-        dtypeLong = torch.cuda.LongTensor
-        device = torch.device('cuda')
-        torch.cuda.manual_seed(42)
-    else:
-        print('cuda not available')
-        dtypeFloat = torch.FloatTensor
-        dtypeLong = torch.LongTensor
-        device = torch.device('cpu')
+    # set other params
+    device = check_cuda()
     undersampling = True
     # I/O
     OUT_DIR = "../results/wandb/"
@@ -65,6 +70,7 @@ if __name__ == '__main__':
         labels_dict = y.to_dict()
         labels_dict = {k: int(v) for k, v in labels_dict.items()}
         features_name = rna.columns
+        pos = get_pos_similarity(X)
         y = np.array(y)
         X = np.array(X)
         X_indices = rna.index[rus.sample_indices_]
@@ -72,6 +78,7 @@ if __name__ == '__main__':
         labels_dict = y.to_dict()
         labels_dict = {k: int(v) for k, v in labels_dict.items()}
         features_name = rna.columns
+        pos = get_pos_similarity(rna)
         y = np.array(y)
         X = np.array(rna)
         X_indices = rna.index
@@ -106,16 +113,26 @@ if __name__ == '__main__':
         X_processed = pd.DataFrame(data=X_processed, columns=feat_names, index=X_indices)
         # build network
         adj = similarity_network(s_threshold=myconfig.S_threshold, X_df=X_processed)
-        display_graph(fold, adj, labels_dict, save_fig=True, path=OUT_DIR,
-                      name_file=sweep_run.name + "-" + str(fold) + "_network.png",
-                      plot_title=sweep_run.name + "- network - fold " + str(fold))
+        G = nx.from_pandas_adjacency(adj)
+        # plot network
+        display_graph(fold, G, pos, labels_dict, save_fig=True, path=OUT_DIR,
+                        name_file=sweep_run.name + "-" + str(fold) + "_network.png",
+                        plot_title=sweep_run.name + "- network - fold " + str(fold), wandb_log=True)
         # create graph data object
         data = create_pyg_data(adj, X_processed, y, train_msk, val_msk, test_msk)
-        # Calculate the homophily ratio for the 'label' attribute (edge homophily ratio described in "Beyond Homophily in Graph Neural Networks: Current Limitations
-        # and Effective Designs" <https://arxiv.org/abs/2006.11468>`_ paper
+        if "GTC_uw" in myconfig.model_name:
+            data.edge_attr = torch.ones((data.edge_index.shape[1], 1), device=data.edge_index.device)
+        elif "GTC" in myconfig.model_name or "GINE" in myconfig.model_name: 
+            data.edge_attr = data.edge_attr.unsqueeze(-1)
+        if "GPST" in myconfig.model_name:
+            data.x, feat_names = pad_features(data.x, myconfig.heads, feat_names)
+        # Calculate the homophily ratio for the 'label' attribute (edge homophily ratio described in "Beyond Homophily in Graph Neural Networks: Current Limitations and Effective Designs" <https://arxiv.org/abs/2006.11468>`_ paper
         homophily_index = homophily(data.edge_index, data.y, method='edge')
+        print(f'Homophily index: {homophily_index}')
         # model
-        model = generate_model(myconfig.model_name, myconfig, data.num_node_features)
+        print(myconfig.model_name)
+        model = generate_model(myconfig.model_name, myconfig, data)
+        model.apply(init_weights)
         model = model.to(device)
         # compute class weights for loss function
         class_weights = class_weight.compute_class_weight(class_weight='balanced',
@@ -130,20 +147,18 @@ if __name__ == '__main__':
                                                    verbose=True)
         n_epochs = myconfig.n_epochs
         if "MLP" in model._get_name():
+            data.edge_index = torch.empty((2, 0), dtype=torch.long).to(device)
             # training for non graph methods
-            losses, performance, best_epoch, best_loss, best_model = training_mlp(device, model, optimizer, scheduler,
-                                                                                  criterion, data, n_epochs, fold)
+            losses, performance, best_epoch, best_loss, best_model = training_mlp(device, model, optimizer, scheduler, criterion, data, n_epochs, fold, wandb)
         else:
-            # training for graph methods
+            # training for graph methods 
             losses, performance, best_epoch, best_loss, best_model = training(device, model, optimizer,
-                                                                                          scheduler, criterion, data,
-                                                                                          n_epochs, fold) # , embeddings
+                                                                            scheduler, criterion, data,
+                                                                            n_epochs, fold, wandb) # , embeddings
         # feature importance
-        feature_importance, node_importance = calculate_feature_importance(model, data, names_list=feat_names, save_fig=True,
-                                                          name_file=f'{sweep_run.name}-{fold}_feature_importance',
-                                                          path=OUT_DIR)
-        fold_v_performance, fold_test_performance, features_track = update_overall_metrics(fold, best_epoch, homophily_index, feat_names, feature_importance.index.tolist(),
-                                                                                           performance, losses, fold_v_performance, fold_test_performance, features_track)
+        feature_importance = feature_importance_gnnexplainer(model, data, names_list=feat_names, save_fig=True, name_file=f'{sweep_run.name}-{fold}_feature_importance',path=OUT_DIR)
+        feature_importance = feature_importance.index.tolist()
+        fold_v_performance, fold_test_performance, features_track = update_overall_metrics(fold, best_epoch, homophily_index, feat_names, feature_importance, performance, losses, fold_v_performance, fold_test_performance, features_track)
         # log performance and loss in wandb
         eval_info = {f'best_val_loss-{fold}': losses[best_epoch][1],  # val_loss at best epoch
                      f'best_val_Accuracy-{fold}': performance["Accuracy"][best_epoch][1],
@@ -164,7 +179,13 @@ if __name__ == '__main__':
         # reset parameters
         print('*resetting model parameters*')
         for name, module in model.named_children():
-            module.reset_parameters()
+            if isinstance(module, torch.nn.ModuleList):
+                for sub_module in module:
+                    if hasattr(sub_module, 'reset_parameters'):
+                        sub_module.reset_parameters()
+            else:
+                if hasattr(module, 'reset_parameters'):
+                    module.reset_parameters()
     cv_metrics_to_wandb(fold_v_performance, fold_test_performance)
     print("sweep", sweep_run.name, pd.DataFrame.from_dict(fold_v_performance))
     print("sweep", sweep_run.name, pd.DataFrame.from_dict(fold_test_performance))
